@@ -14,8 +14,8 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
+  final _emailController = TextEditingController(text: 'test@example.com');
+  final _passwordController = TextEditingController(text: 'password');
   bool _obscurePassword = true;
 
   @override
@@ -93,7 +93,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 const Divider(),
                 SizedBox(height: 16.h),
 
-                // Full Name
                 TextFormField(
                   controller: fullNameController,
                   decoration: InputDecoration(
@@ -123,7 +122,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 SizedBox(height: 12.h),
 
-                // Email
                 TextFormField(
                   controller: emailController,
                   keyboardType: TextInputType.emailAddress,
@@ -157,7 +155,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 SizedBox(height: 12.h),
 
-                // Password
                 TextFormField(
                   controller: passwordController,
                   obscureText: true,
@@ -191,7 +188,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 SizedBox(height: 12.h),
 
-                // Confirm Password
                 TextFormField(
                   controller: confirmPasswordController,
                   obscureText: true,
@@ -225,7 +221,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 SizedBox(height: 24.h),
 
-                // Sign Up Button
                 SizedBox(
                   width: double.infinity,
                   height: 48.h,
@@ -290,9 +285,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 behavior: SnackBarBehavior.floating,
               ),
             );
-          } else if (state is AuthAuthenticated) {
-            // Navigate to home screen or dashboard
-          }
+          } else if (state is AuthAuthenticated) {}
         },
         child: SafeArea(
           child: Center(
@@ -305,7 +298,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   children: [
                     SizedBox(height: 60.h),
 
-                    // Social App Logo Text
                     Text(
                       'Social App',
                       style: TextStyle(
@@ -318,7 +310,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
                     SizedBox(height: 16.h),
 
-                    // Tagline
                     Text(
                       'Connect with friends and the world\naround you on Social App.',
                       textAlign: TextAlign.center,
@@ -331,7 +322,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
                     SizedBox(height: 32.h),
 
-                    // Login Card
                     Container(
                       padding: EdgeInsets.all(20.w),
                       decoration: BoxDecoration(
@@ -350,7 +340,6 @@ class _LoginScreenState extends State<LoginScreen> {
                         key: _formKey,
                         child: Column(
                           children: [
-                            // Email/Phone Input
                             TextFormField(
                               controller: _emailController,
                               keyboardType: TextInputType.emailAddress,
@@ -397,7 +386,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
                             SizedBox(height: 12.h),
 
-                            // Password Input
                             TextFormField(
                               controller: _passwordController,
                               obscureText: _obscurePassword,
@@ -458,7 +446,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
                             SizedBox(height: 20.h),
 
-                            // Log In Button
                             BlocBuilder<AuthBloc, AuthState>(
                               builder: (context, state) {
                                 final isLoading = state is AuthLoading;
@@ -507,7 +494,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
                             SizedBox(height: 16.h),
 
-                            // Forgot Password
                             TextButton(
                               onPressed: () {
                                 _showForgotPasswordDialog();
@@ -523,12 +509,10 @@ class _LoginScreenState extends State<LoginScreen> {
 
                             SizedBox(height: 8.h),
 
-                            // Divider
                             Divider(color: Colors.grey.shade300, thickness: 1),
 
                             SizedBox(height: 20.h),
 
-                            // Create Account Button
                             SizedBox(
                               height: 48.h,
                               child: ElevatedButton(
