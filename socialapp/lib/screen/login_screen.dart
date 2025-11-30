@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../bloc/repository/auth/auth_bloc.dart';
 import '../bloc/repository/auth/auth_event.dart';
 import '../bloc/repository/auth/auth_state.dart';
+import 'forgot_password_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -45,8 +46,11 @@ class _LoginScreenState extends State<LoginScreen> {
           if (state is AuthError) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text(state.message),
-                backgroundColor: Colors.red.shade600,
+                content: Text(
+                  'Something went wrong',
+                  style: TextStyle(color: Colors.white),
+                ),
+                backgroundColor: Colors.redAccent,
                 behavior: SnackBarBehavior.floating,
               ),
             );
@@ -114,6 +118,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         child: Column(
                           children: [
                             TextFormField(
+                              cursorColor: Colors.black,
                               controller: _emailController,
                               keyboardType: TextInputType.emailAddress,
                               style: TextStyle(fontSize: 16.sp),
@@ -269,7 +274,13 @@ class _LoginScreenState extends State<LoginScreen> {
 
                             TextButton(
                               onPressed: () {
-                                _showForgotPasswordDialog();
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        const ForgotPasswordScreen(),
+                                  ),
+                                );
                               },
                               child: Text(
                                 'Forgot password?',
@@ -280,11 +291,9 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                             ),
 
-                            SizedBox(height: 8.h),
-
-                            Divider(color: Colors.grey.shade300, thickness: 1),
-
                             SizedBox(height: 20.h),
+                            Divider(color: Colors.grey.shade300, thickness: 1),
+                            SizedBox(height: 8.h),
 
                             SizedBox(
                               height: 48.h,
@@ -322,97 +331,6 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
           ),
         ),
-      ),
-    );
-  }
-
-  void _showForgotPasswordDialog() {
-    final emailController = TextEditingController();
-
-    showDialog(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12.r),
-        ),
-        title: Text(
-          'Find Your Account',
-          style: TextStyle(fontSize: 20.sp, fontWeight: FontWeight.bold),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Please enter your email address to search for your account.',
-              style: TextStyle(color: Colors.grey.shade700, fontSize: 14.sp),
-            ),
-            SizedBox(height: 16.h),
-            TextFormField(
-              controller: emailController,
-              keyboardType: TextInputType.emailAddress,
-              decoration: InputDecoration(
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8.r),
-                  borderSide: BorderSide(color: Colors.blueGrey),
-                ),
-
-                hintText: 'Email address',
-                hintStyle: TextStyle(fontSize: 14.sp),
-                filled: true,
-                fillColor: Colors.grey.shade100,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8.r),
-                  borderSide: BorderSide(color: Colors.grey.shade300),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8.r),
-                  borderSide: BorderSide(color: Colors.grey.shade300),
-                ),
-                contentPadding: EdgeInsets.symmetric(
-                  horizontal: 16.w,
-                  vertical: 14.h,
-                ),
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: Text(
-              'Cancel',
-              style: TextStyle(
-                color: Colors.grey.shade700,
-                fontSize: 15.sp,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              if (emailController.text.isNotEmpty) {
-                context.read<AuthBloc>().add(
-                  ForgotPassword(email: emailController.text.trim()),
-                );
-                Navigator.pop(dialogContext);
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF1877F2),
-              foregroundColor: Colors.white,
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8.r),
-              ),
-            ),
-            child: Text(
-              'Search',
-              style: TextStyle(fontSize: 15.sp, fontWeight: FontWeight.w600),
-            ),
-          ),
-        ],
       ),
     );
   }

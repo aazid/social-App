@@ -10,6 +10,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<LoginSubmitted>(_onLoginSubmitted);
     on<SignUp>(_onSignUp);
     on<ForgotPassword>(_onForgotPasswordsub);
+    on<ResetPassword>(_onResetPassword);
     on<ChangePassword>(_onChangePasswordsub);
     on<UpdateProfile>(_onUpdateProfilesub);
   }
@@ -50,9 +51,37 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     emit(AuthLoading());
     try {
       await _authRepository.forgotPassword(event.email);
-      emit(AuthSuccess('Reset email sent!', message: ''));
+      emit(
+        AuthSuccess(
+          'Email verified successfully!',
+          message: 'Email verified successfully!',
+        ),
+      );
     } catch (e) {
-      emit(AuthError(message: ''));
+      emit(AuthError(message: e.toString()));
+    }
+  }
+
+  Future<void> _onResetPassword(
+    ResetPassword event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(AuthLoading());
+    try {
+      await _authRepository.resetPassword(
+        event.email,
+        event.newPassword,
+        event.confirmPassword,
+      );
+      emit(
+        AuthSuccess(
+          'Password reset successfully!',
+          message:
+              'Password reset successfully! Please login with your new password.',
+        ),
+      );
+    } catch (e) {
+      emit(AuthError(message: e.toString()));
     }
   }
 

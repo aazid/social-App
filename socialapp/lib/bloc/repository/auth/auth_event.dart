@@ -24,6 +24,17 @@ class ForgotPassword extends AuthEvent {
   ForgotPassword({required this.email});
 }
 
+class ResetPassword extends AuthEvent {
+  final String email;
+  final String newPassword;
+  final String confirmPassword;
+  ResetPassword({
+    required this.email,
+    required this.newPassword,
+    required this.confirmPassword,
+  });
+}
+
 class ChangePassword extends AuthEvent {
   final String oldPassword;
   final String newPassword;
