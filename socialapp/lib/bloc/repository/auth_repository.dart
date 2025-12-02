@@ -1,11 +1,25 @@
+import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthRepository {
-  static const String _keyUserEmail = 'user_email';
-  static const String _keyUserPassword = 'user_password';
-  static const String _keyUserFullName = 'user_full_name';
-  static const String _keyUserId = 'user_id';
+  static const String _keyAllUsers = 'all_users_db';
+
+  static const String _keyCurrentEmail = 'current_user_email';
   static const String _keyIsLoggedIn = 'is_logged_in';
+
+  Future<Map<String, dynamic>> _getAllUsers() async {
+    final prefs = await SharedPreferences.getInstance();
+    final String? usersJson = prefs.getString(_keyAllUsers);
+    if (usersJson == null) {
+      return {};
+    }
+    return jsonDecode(usersJson) as Map<String, dynamic>;
+  }
+
+  Future<void> _saveAllUsers(Map<String, dynamic> users) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_keyAllUsers, jsonEncode(users));
+  }
 
   Future<String?> login(String email, String password) async {
     await Future.delayed(const Duration(seconds: 1));
@@ -14,32 +28,40 @@ class AuthRepository {
       throw Exception('Email and password are required');
     }
 
-    final prefs = await SharedPreferences.getInstance();
-    final storedEmail = prefs.getString(_keyUserEmail);
-    final storedPassword = prefs.getString(_keyUserPassword);
-    final userId = prefs.getString(_keyUserId);
+    final users = await _getAllUsers();
 
-    if (storedEmail == null || storedPassword == null) {
+    if (!users.containsKey(email)) {
       throw Exception('No account found. Please sign up first.');
     }
 
-    if (email == storedEmail && password == storedPassword) {
-      await prefs.setBool(_keyIsLoggedIn, true);
-      return userId ?? 'user_${DateTime.now().millisecondsSinceEpoch}';
+    final userData = users[email] as Map<String, dynamic>;
+    if (userData['password'] == password) {
+      await _createSession(email);
+      return userData['id'];
     }
 
     throw Exception('Invalid email or password');
   }
 
-  Future<String?> signUp(
-    String email,
-    String password,
-    String confirmPassword,
-    String fullName,
-  ) async {
+  Future<String?> signUp({
+    required String email,
+    required String password,
+    required String confirmPassword,
+    required String firstName,
+    required String lastName,
+    required String dob,
+    required String gender,
+    String? profilePicturePath,
+  }) async {
     await Future.delayed(const Duration(seconds: 1));
 
-    if (email.isEmpty || password.isEmpty || confirmPassword.isEmpty) {
+    if (email.isEmpty ||
+        password.isEmpty ||
+        confirmPassword.isEmpty ||
+        firstName.isEmpty ||
+        lastName.isEmpty ||
+        dob.isEmpty ||
+        gender.isEmpty) {
       throw Exception('All fields are required');
     }
 
@@ -55,20 +77,28 @@ class AuthRepository {
       throw Exception('Passwords do not match');
     }
 
-    final prefs = await SharedPreferences.getInstance();
-    final existingEmail = prefs.getString(_keyUserEmail);
+    final users = await _getAllUsers();
 
-    if (existingEmail != null && existingEmail == email) {
+    if (users.containsKey(email)) {
       throw Exception('Account already exists. Please login.');
     }
 
     final userId = 'user_${DateTime.now().millisecondsSinceEpoch}';
+    final fullName = '$firstName $lastName';
 
-    await prefs.setString(_keyUserEmail, email);
-    await prefs.setString(_keyUserPassword, password);
-    await prefs.setString(_keyUserFullName, fullName);
-    await prefs.setString(_keyUserId, userId);
-    await prefs.setBool(_keyIsLoggedIn, true);
+    await _createOrUpdateUser(
+      email: email,
+      password: password,
+      fullName: fullName,
+      id: userId,
+      firstName: firstName,
+      lastName: lastName,
+      dob: dob,
+      gender: gender,
+      profilePicturePath: profilePicturePath,
+    );
+
+    await _createSession(email);
 
     return userId;
   }
@@ -84,18 +114,10 @@ class AuthRepository {
       throw Exception('Please enter a valid email');
     }
 
-    if (email == 'test@example.com') {
-      return;
-    }
+    if (email == 'test@example.com') return;
 
-    final prefs = await SharedPreferences.getInstance();
-    final storedEmail = prefs.getString(_keyUserEmail);
-
-    if (storedEmail == null) {
-      throw Exception('No account found with this email');
-    }
-
-    if (storedEmail != email) {
+    final users = await _getAllUsers();
+    if (!users.containsKey(email)) {
       throw Exception('No account found with this email');
     }
   }
@@ -119,23 +141,32 @@ class AuthRepository {
       throw Exception('Passwords do not match');
     }
 
-    final prefs = await SharedPreferences.getInstance();
-    final storedEmail = prefs.getString(_keyUserEmail);
+    final users = await _getAllUsers();
 
-    if (email == 'test@example.com') {
-      await prefs.setString(_keyUserEmail, email);
-      await prefs.setString(_keyUserPassword, newPassword);
-      await prefs.setString(_keyUserFullName, 'Test User');
-      await prefs.setBool(_keyIsLoggedIn, false);
-      return;
-    }
-
-    if (storedEmail == null || storedEmail != email) {
+    if (!users.containsKey(email) && email != 'test@example.com') {
       throw Exception('No account found with this email');
     }
 
-    await prefs.setString(_keyUserPassword, newPassword);
+    String fullName = 'User';
+    String userId = 'user_${DateTime.now().millisecondsSinceEpoch}';
 
+    if (users.containsKey(email)) {
+      final userData = users[email] as Map<String, dynamic>;
+      fullName = userData['fullName'] ?? 'User';
+      userId = userData['id'] ?? userId;
+    } else if (email == 'test@example.com') {
+      fullName = 'Test User';
+      userId = 'user_test_id';
+    }
+
+    await _createOrUpdateUser(
+      email: email,
+      password: newPassword,
+      fullName: fullName,
+      id: userId,
+    );
+
+    final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_keyIsLoggedIn, false);
   }
 
@@ -162,14 +193,24 @@ class AuthRepository {
       throw Exception('New password must be different from old password');
     }
 
-    final prefs = await SharedPreferences.getInstance();
-    final storedPassword = prefs.getString(_keyUserPassword);
+    final currentUserEmail = await getCurrentUserEmail();
+    if (currentUserEmail == null) {
+      throw Exception('Not logged in');
+    }
 
-    if (storedPassword == null || storedPassword != oldPassword) {
+    final users = await _getAllUsers();
+    final userData = users[currentUserEmail] as Map<String, dynamic>;
+
+    if (userData['password'] != oldPassword) {
       throw Exception('Current password is incorrect');
     }
 
-    await prefs.setString(_keyUserPassword, newPassword);
+    await _createOrUpdateUser(
+      email: currentUserEmail,
+      password: newPassword,
+      fullName: userData['fullName'],
+      id: userData['id'],
+    );
   }
 
   Future<void> updateProfile(String fullName, String bio) async {
@@ -183,14 +224,58 @@ class AuthRepository {
       throw Exception('Name must be at least 2 characters');
     }
 
+    final currentUserEmail = await getCurrentUserEmail();
+    if (currentUserEmail == null) {
+      throw Exception('Not logged in');
+    }
+
+    final users = await _getAllUsers();
+    final userData = users[currentUserEmail] as Map<String, dynamic>;
+
+    await _createOrUpdateUser(
+      email: currentUserEmail,
+      password: userData['password'],
+      fullName: fullName,
+      id: userData['id'],
+    );
+  }
+
+  Future<void> _createOrUpdateUser({
+    required String email,
+    required String password,
+    required String fullName,
+    required String id,
+    String? firstName,
+    String? lastName,
+    String? dob,
+    String? gender,
+    String? profilePicturePath,
+  }) async {
+    final users = await _getAllUsers();
+    users[email] = {
+      'password': password,
+      'fullName': fullName,
+      'id': id,
+      if (firstName != null) 'firstName': firstName,
+      if (lastName != null) 'lastName': lastName,
+      if (dob != null) 'dob': dob,
+      if (gender != null) 'gender': gender,
+      if (profilePicturePath != null) 'profilePicturePath': profilePicturePath,
+    };
+    await _saveAllUsers(users);
+  }
+
+  Future<void> _createSession(String email) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_keyUserFullName, fullName);
+    await prefs.setString(_keyCurrentEmail, email);
+    await prefs.setBool(_keyIsLoggedIn, true);
   }
 
   Future<void> logout() async {
     await Future.delayed(const Duration(milliseconds: 200));
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_keyIsLoggedIn, false);
+    await prefs.remove(_keyCurrentEmail);
   }
 
   Future<bool> isLoggedIn() async {
@@ -200,17 +285,29 @@ class AuthRepository {
 
   Future<String?> getCurrentUserEmail() async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(_keyUserEmail);
+    return prefs.getString(_keyCurrentEmail);
   }
 
   Future<String?> getCurrentUserFullName() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(_keyUserFullName);
+    final email = await getCurrentUserEmail();
+    if (email == null) return null;
+
+    final users = await _getAllUsers();
+    if (users.containsKey(email)) {
+      return users[email]['fullName'];
+    }
+    return null;
   }
 
   Future<String?> getCurrentUserId() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(_keyUserId);
+    final email = await getCurrentUserEmail();
+    if (email == null) return null;
+
+    final users = await _getAllUsers();
+    if (users.containsKey(email)) {
+      return users[email]['id'];
+    }
+    return null;
   }
 
   Future<void> clearAllData() async {

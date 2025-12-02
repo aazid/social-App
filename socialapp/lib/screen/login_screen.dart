@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:socialapp/screen/profile_screen.dart';
+import 'package:socialapp/screen/sign_up_screen.dart';
 import '../bloc/repository/auth/auth_bloc.dart';
 import '../bloc/repository/auth/auth_event.dart';
 import '../bloc/repository/auth/auth_state.dart';
@@ -258,11 +260,22 @@ class _LoginScreenState extends State<LoginScreen> {
                                                       >(Colors.white),
                                                 ),
                                           )
-                                        : Text(
-                                            'Log In',
-                                            style: TextStyle(
-                                              fontSize: 18.sp,
-                                              fontWeight: FontWeight.bold,
+                                        : TextButton(
+                                            onPressed: () {
+                                              Navigator.pushReplacement(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder: (context) =>
+                                                      ProfileScreen(),
+                                                ),
+                                              );
+                                            },
+                                            child: Text(
+                                              'Log In',
+                                              style: TextStyle(
+                                                fontSize: 18.sp,
+                                                fontWeight: FontWeight.bold,
+                                              ),
                                             ),
                                           ),
                                   ),
@@ -298,7 +311,14 @@ class _LoginScreenState extends State<LoginScreen> {
                             SizedBox(
                               height: 48.h,
                               child: ElevatedButton(
-                                onPressed: () {},
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => SignUpScreen(),
+                                    ),
+                                  );
+                                },
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: const Color(0xFF00A400),
                                   foregroundColor: Colors.white,

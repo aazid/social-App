@@ -32,15 +32,18 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     emit(AuthLoading());
     try {
       final userId = await _authRepository.signUp(
-        event.email,
-        event.password,
-        event.confirmPassword,
-        event.fullName,
+        email: event.email,
+        password: event.password,
+        confirmPassword: event.confirmPassword,
+        firstName: event.firstName,
+        lastName: event.lastName,
+        dob: event.dob,
+        gender: event.gender,
+        profilePicturePath: event.profilePicturePath,
       );
-      emit(AuthAuthenticated(userId!, userId: ''));
-      emit(AuthSuccess('Account created successfully!', message: ''));
+      emit(AuthAuthenticated(userId!, userId: userId));
     } catch (e) {
-      emit(AuthError(message: ''));
+      emit(AuthError(message: e.toString()));
     }
   }
 

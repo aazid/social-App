@@ -10,12 +10,20 @@ class SignUp extends AuthEvent {
   final String email;
   final String password;
   final String confirmPassword;
-  final String fullName;
+  final String firstName;
+  final String lastName;
+  final String dob;
+  final String gender;
+  final String? profilePicturePath;
   SignUp({
     required this.confirmPassword,
     required this.email,
-    required this.fullName,
+    required this.dob,
+    required this.firstName,
+    required this.gender,
+    required this.lastName,
     required this.password,
+    this.profilePicturePath,
   });
 }
 
